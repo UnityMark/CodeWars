@@ -35,8 +35,6 @@ public static class Kata
 ```
 **Best Solution**
 ```C#
-using System.Linq;
-
 public static class Kata
 {
     public static object[] RemoveEveryOther(object[] arr)
