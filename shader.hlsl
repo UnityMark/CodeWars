@@ -1,6 +1,6 @@
 // Made with Amplify Shader Editor v1.9.5.1
 // Available at the Unity Asset Store - http://u3d.as/y3X 
-Shader "Stylized Toon"
+Shader "Custom/Test"
 {
 	Properties
 	{
@@ -136,28 +136,71 @@ Shader "Stylized Toon"
         [HideInInspector][NoScaleOffset] unity_ShadowMasks("unity_ShadowMasks", 2DArray) = "" {}
 
 		[HideInInspector][ToggleOff] _ReceiveShadows("Receive Shadows", Float) = 1.0
+
+		_BumpCenter("Sphere Position", Vector) = (0,0,0,0)
+		_BumpRadius("Bulge Radius", Float) = 0.5
+		_BumpHeight("Bulge Height", Float) = 0.15
 	}
 
 	SubShader
 	{
 		LOD 0
 
-		
-
 		Tags { "RenderPipeline"="UniversalPipeline" "RenderType"="Opaque" "Queue"="Geometry" "UniversalMaterialType"="Unlit" }
 
 		Cull Back
 		AlphaToMask Off
 
-		
-
 		HLSLINCLUDE
 		#pragma target 4.5
 		#pragma prefer_hlslcc gles
+		#pragma vertex vert
+		#pragma fragment frag
+
+
 		// ensure rendering platforms toggle list is visible
 
 		#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 		#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Filtering.hlsl"
+        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+		float4 _BumpCenter;   // Vector4 из Properties
+		float _BumpRadius;
+		float _BumpHeight;
+
+		//--
+		struct Attributes
+        {
+            float4 positionOS : POSITION;
+            float3 normalOS : NORMAL;
+        };
+
+        struct Varyings
+        {
+            float4 positionHCS : SV_POSITION;
+        };
+
+        Varyings vert(Attributes IN)
+		{
+			Varyings OUT;
+
+			float3 worldPos = TransformObjectToWorld(IN.positionOS).xyz;
+			float3 normalWS = TransformObjectToWorldNormal(IN.normalOS);
+
+			float dist = distance(worldPos, _BumpCenter.xyz);
+			float v = saturate(1 - dist / _BumpRadius);
+
+			worldPos += normalWS * (v * _BumpHeight);
+
+			OUT.positionHCS = TransformWorldToHClip(float4(worldPos,1));
+			return OUT;
+		}
+
+		float4 frag() : SV_Target
+		{
+			return float4(1,1,1,1);
+		}
+		//--
 
 		#ifndef ASE_TESS_FUNCS
 		#define ASE_TESS_FUNCS
@@ -259,6 +302,7 @@ Shader "Stylized Toon"
 			}
 			return tess;
 		}
+
 		#endif //ASE_TESS_FUNCS
 		ENDHLSL
 
