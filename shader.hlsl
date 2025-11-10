@@ -1170,6 +1170,19 @@ Shader "Custom/Test"
 				
 				o.ase_texcoord4.xy = v.ase_texcoord.xy;
 				o.ase_texcoord5 = v.positionOS;
+
+				// ===== BUMP DEFORMATION =====
+				// позиция вершины в мире
+				float3 worldPos = TransformObjectToWorld(v.positionOS.xyz);
+				// расстояние до центра бугра
+				float distanceToCenter = distance(worldPos.xz, _BumpCenter.xz);
+				// маска плавности (0 -> вне радиуса)
+				float bumpMask = saturate(1.0 - distanceToCenter / _BumpRadius);
+				// подъём вершины (плавный)
+				float bumpOffset = bumpMask * _BumpHeight;
+				// применяем смещение по нормали (подъём)
+				v.positionOS.y += bumpOffset;
+				// ===== END BUMP =====
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
 				o.ase_texcoord4.zw = 0;
